@@ -176,7 +176,6 @@ sys_render_exec(struct system *sys, struct camera cam, int do_frustum_cull)
 		}
 
 		if (e.count == 0) {
-			glDisable(GL_CULL_FACE);
 			render_mesh(mesh);
 		} else {
 			GLuint vbo;

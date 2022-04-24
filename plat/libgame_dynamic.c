@@ -52,6 +52,7 @@ libgame_init(struct libgame *libgame)
 		libgame->handle = dlopen(path[i], RTLD_LAZY);
 		if (libgame->handle) {
 			libgame->path = path[i];
+			fprintf(stderr, "found %s\n", path[i]);
 			break;
 		}
 	}

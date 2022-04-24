@@ -34,24 +34,46 @@ game_load_font(struct game_asset *game_asset)
 	return font;
 }
 
+struct lvl lvl1 = {
+	.start = {1, 0, 1},
+	.map = {
+		{1, 1, 1, 1, 1},
+		{1, 0, 0, 0, 1},
+		{1, 0, 0, 0, 1},
+		{1, 0, 0, 0, 1},
+		{1, 0, 0, 0, 1},
+		{1, 0, 0, 0, 1},
+		{1, 0, 1, 0, 1},
+		{1, 1, 1, 1, 1},
+	},
+};
+
 static void
 game_load_entities(struct game_state *game_state)
 {
 	int id = 0;
+
+	if (game_state->current_lvl == NULL)
+		game_state->current_lvl = &lvl1;
 
 	/* player must have the id 0 */
 	game_state->entity[id++] = (struct entity){
 		.components = {
 			.is_player = 1,
 			.has_movement = 1,
-			.has_debug = 1},
-		.move_speed = 0.8,
-		.position = {0,0,0},
+			.has_debug = 0},
+		.move_speed = 1.8,
+		.position = game_state->current_lvl->start,
 		.direction = {0,0,0},
 		.debug_mesh = DEBUG_MESH_CYLINDER,
-		.debug_scale = {0.2, 1, 0.2},
+		.debug_scale = {0.2, 0.5, 0.2},
 	};
-
+	game_state->entity[id++] = (struct entity){
+		.components = { .has_render = 1, },
+		.position = {5, 0, 10},
+		.mesh = MESH_D_PLAT,
+		.shader = SHADER_WORLD,
+	};
 	game_state->entity_count = id;
 }
 
@@ -96,8 +118,9 @@ game_fini(struct game_memory *memory)
 }
 
 static void
-game_set_player_movement(struct input *input, struct entity *e)
+game_set_player_movement(struct game_state *game_state, struct input *input)
 {
+	struct entity *e = &game_state->entity[0];
 	int dir_forw = 0, dir_left = 0;
 
 	if (key_pressed(input, 'W'))
@@ -116,6 +139,7 @@ game_set_player_movement(struct input *input, struct entity *e)
 	} else {
 		e->direction = VEC3_ZERO;
 	}
+//	camera_set_position(&game_state->cam, e->position);
 }
 
 static void
@@ -215,6 +239,71 @@ flycam_move(struct game_state *game_state, struct input *input)
 	}
 }
 
+static void
+game_render_wall(struct system *sys_render, vec3 pos)
+{
+	sys_render_push(sys_render, &(struct render_entry){
+			.shader = SHADER_SOLID,
+			.mesh = DEBUG_MESH_CUBE,
+			.scale = {0.5, 0.5, 0.5},
+			.position = {pos.x + 0.5, 0.5, pos.z + 0.5},
+			.rotation = QUATERNION_IDENTITY,
+			.color = {1,0,0},
+			.cull = 1,
+		});
+}
+
+static void
+game_render_lvl(struct game_state *game_state)
+{
+	struct system *sys_render = &game_state->sys_render;
+	struct lvl *lvl = game_state->current_lvl;
+	struct texture *depth = &game_state->depth;
+
+	unsigned int x, y;
+
+	for (x = 0; x < ARRAY_LEN(lvl->map); x++) {
+		for (y = 0; y < ARRAY_LEN(lvl->map[0]); y++) {
+			vec3 p = {x, 0, y};
+			switch (lvl->map[x][y]) {
+			case 0:
+				sys_render_push(sys_render, &(struct render_entry){
+						.shader = SHADER_WORLD,
+						.mesh = MESH_FLOOR,
+						.scale = {1, 1, 1},
+						.position = {p.x+0.5, 0, p.z+0.5},
+						.rotation = quaternion_axis_angle(VEC3_AXIS_Y, (x+y)*0.5*M_PI),
+						.color = {0.5,0,0},
+						.texture = {
+							{.name = "t_line", .res_id = TEXTURE_LINE },
+							{.name = "depth", .res_id = INTERNAL_TEXTURE, .tex = depth }
+						},
+
+						.cull = 1,
+					});
+				break;
+			case 1:
+				sys_render_push(sys_render, &(struct render_entry){
+						.shader = SHADER_WORLD,
+						.mesh = MESH_WALL,
+						.scale = {1, 1, 1},
+						.position = {p.x+0.5, 0, p.z+0.5},
+						.rotation = quaternion_axis_angle(VEC3_AXIS_Y, (x+y)*0.5*M_PI),
+						.color = {0.5,0,0},
+										.texture = {
+					{.name = "t_line", .res_id = TEXTURE_LINE },
+					{.name = "depth", .res_id = INTERNAL_TEXTURE, .tex = depth }
+				},
+
+						.cull = 1,
+					});
+
+				break;
+			}
+		}
+	}
+}
+
 void
 game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 {
@@ -230,6 +319,7 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 	game_state->input = input;
 	game_state->dt = input->time - last_input->time;
 
+	(void)(light);
 	(void)(audio);
 
 	memory->scrap.used = 0;
@@ -271,12 +361,13 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 	if (game_state->flycam)
 		flycam_move(game_state, input);
 	else
-		game_set_player_movement(game_state->input, &game_state->entity[0]);
+		game_set_player_movement(game_state, input);
 
+	game_render_lvl(game_state);
 	entity_step(game_state);
 
 	struct texture *depth = &game_state->depth;
-	*depth = create_2d_tex(1024, 1024, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	*depth = create_2d_tex(2048, 2048, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
@@ -286,7 +377,7 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth->id, 0);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
-		light_set_pos(light, (vec3){-8.113143, 39.749962, -7.408203});
+		light_set_pos(light, (vec3){-8.113143, 19.749962, -7.408203});
 		light_look_at(light, (vec3){0.0, 0., 0.}, (vec3){0., 1., 0.});
 
 		camera_init(&game_state->sun, 1.0, depth->width / depth->height);

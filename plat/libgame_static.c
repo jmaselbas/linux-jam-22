@@ -8,7 +8,9 @@ void libgame_reload(struct libgame *libgame)
 
 void libgame_init(struct libgame *libgame)
 {
-	UNUSED(libgame);
+	libgame->init = game_init;
+	libgame->step = game_step;
+	libgame->fini = game_fini;
 }
 
 int libgame_changed(struct libgame *libgame)

@@ -56,6 +56,11 @@ struct listener {
 	vec3 left;
 };
 
+struct lvl {
+	char map[16][16];
+	vec3 start;
+};
+
 struct game_state {
 	struct game_asset *game_asset;
 	struct window_io *window_io;
@@ -72,6 +77,7 @@ struct game_state {
 		GAME_PAUSE,
 	} state, new_state;
 
+	struct lvl *current_lvl;
 	struct camera cam;
 	struct camera sun;
 	int flycam;

@@ -33,31 +33,18 @@ test-obj = $(test-src:.c=.o)
 TESTBIN = test
 BIN = survivre$(EXT)
 LIB = $(LIBDIR)/libgame.so
-RES += res/audio/casey.ogg \
- res/audio/fx_bip_01.wav \
- res/audio/fx_crash_01.wav \
- res/audio/fx_crash_02.wav \
- res/audio/fx_crash_03.wav \
- res/audio/fx_crash_04.wav \
- res/audio/fx_wind_loop.ogg \
- res/audio/fx_woosh_01.wav \
- res/audio/fx_woosh_02.wav \
- res/audio/fx_woosh_03.wav \
- res/audio/fx_woosh_04.wav \
- res/audio/LD48_loop_fade.ogg \
- res/cap.obj \
- res/menu_quit.obj \
- res/menu_start.obj \
- res/player.obj \
- res/rock.obj \
- res/room.obj \
- res/screen.obj \
- res/wall.obj \
- res/orth.vert \
- res/proj.vert \
- res/solid.frag \
- res/screen.frag \
- res/wall.frag
+RES += res/DejaVuSansMono.csv \
+	res/DejaVuSansMono.png \
+	res/d_plat.obj \
+	res/floor.obj \
+	res/orth.vert \
+	res/proj.vert \
+	res/solid.frag \
+	res/tex.png \
+	res/text.frag \
+	res/texture.frag \
+	res/wall.obj \
+	res/world.frag
 
 # dynlib is the default target for now, not meant for release
 all: dynlib static
@@ -75,7 +62,7 @@ $(OUT)$(LIB): $(obj)
 	@mkdir -p $(dir $@)
 	$(CC) -shared $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
-$(OUT)run: $(obj) $(plt-obj) $(plt-dynlib-y-obj)
+$(OUT)run: $(plt-obj) $(plt-dynlib-y-obj)
 	@mkdir -p $(dir $@)
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS) $(LDLIBS)
 

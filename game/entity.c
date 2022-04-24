@@ -11,15 +11,6 @@ render_entity(struct game_state *game_state, size_t count, entity_id *id)
 	struct texture *depth = &game_state->depth;
 	size_t i;
 
-	sys_render_push(sys_render, &(struct render_entry){
-			.shader = SHADER_SKY,
-			.mesh = MESH_QUAD,
-			.scale = {1, 1, 1},
-			.position = {0, 0, -1},
-			.rotation = QUATERNION_IDENTITY,
-			.cull = 0,
-		});
-
 	for (i = 0; i < count; i++) {
 		struct entity *e = &game_state->entity[id[i]];
 
@@ -31,8 +22,7 @@ render_entity(struct game_state *game_state, size_t count, entity_id *id)
 				.rotation = QUATERNION_IDENTITY,
 				.color = e->color,
 				.texture = {
-					{.name = "tex", .res_id = TEXTURE_CONCRETE },
-					{.name = "nmap", .res_id = TEXTURE_CONCRETE_NORMAL },
+					{.name = "t_line", .res_id = TEXTURE_LINE },
 					{.name = "depth", .res_id = INTERNAL_TEXTURE, .tex = depth }
 				},
 				.cull = 1,
@@ -64,9 +54,62 @@ sound_entity(struct game_state *game_state, size_t count, entity_id *id)
 	}
 }
 
+static vec3
+coll_entity(struct game_state *game_state, vec3 cur, vec3 pos)
+{
+	struct system *dbg_render = &game_state->dbg_render;
+	struct lvl *lvl = game_state->current_lvl;
+	int min_x, max_x;
+	int min_y, max_y;
+	unsigned int x, y;
+	vec3 p = {0};
+	vec3 s = {0.05,0.05,0.05};
+	vec3 c = {0,1,1};
+	float m = 10000, d;
+
+	sys_render_push_cross(dbg_render, cur, (vec3){0.2,0.2,0.2}, (vec3){0,0.5,0.5});
+	sys_render_push_cross(dbg_render, pos, (vec3){0.1,0.1,0.1}, (vec3){0.5,0,0.5});
+
+	min_x = MAX(0, ((int)cur.x) - 1.0);
+	max_x = MIN(((int)cur.x) + 2.0,  ARRAY_LEN(lvl->map));
+	min_y = MAX(0, ((int)cur.z) - 1.0);
+	max_y = MIN(((int)cur.z) + 2.0,  ARRAY_LEN(lvl->map[0]));
+	for (x = min_x; x < max_x; x++) {
+		for (y = min_y; y < max_y; y++) {
+			float px = x;
+			float py = y;
+			if (pos.x < px)
+				p.x = px;
+			else if (pos.x > (px + 1.0))
+				p.x = px + 1.0;
+			else
+				p.x = pos.x;
+			if (pos.z < py)
+				p.z = py;
+			else if (pos.z > (py + 1.0))
+				p.z = py + 1.0;
+			else
+				p.z = pos.z;
+
+			if (lvl->map[x][y] == 0) {
+				sys_render_push_cross(dbg_render, (vec3){x,0,y}, s, c);
+				sys_render_push_cross(dbg_render, p, s, c);
+				d = vec3_dist(pos, p);
+				if (d < m) {
+					m = d;
+					cur = p;
+				}
+			}
+		}
+	}
+
+	return cur;
+}
+
 static void
 move_entity(struct game_state *game_state, size_t count, entity_id *id)
 {
+	struct system *dbg_render = &game_state->dbg_render;
 	float dt = game_state->dt;
 	size_t i;
 
@@ -76,7 +119,9 @@ move_entity(struct game_state *game_state, size_t count, entity_id *id)
 		vec3 dir = e->direction;
 		float speed = e->move_speed * dt;
 
-		e->position = vec3_add(pos, vec3_mult(speed, dir));
+		pos = coll_entity(game_state, pos, vec3_add(pos, vec3_mult(speed, dir)));
+		e->position = pos;
+		sys_render_push_vec(dbg_render, pos, dir, (vec3){0,1,0.5});
 	}
 }
 

@@ -50,7 +50,7 @@ CFLAGS += $(CFLAGS-y)
 
 # Flags
 CFLAGS += -D_XOPEN_SOURCE=600 -D_POSIX_C_SOURCE=200809L
-CFLAGS += -O2 -W -fPIC -Wall -Wextra -Werror -g
+CFLAGS += -O2 -W -fPIC -Wall -Wextra -g
 ifneq ($(RELEASE),)
 CFLAGS += -s -ffunction-sections
 endif

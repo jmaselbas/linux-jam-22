@@ -53,8 +53,17 @@ static struct res_entry resfiles[ASSET_KEY_COUNT] = {
 	[DEBUG_MESH_CROSS] = { MESH_INTERNAL, {}},
 	[DEBUG_MESH_CYLINDER] = { MESH_INTERNAL, {} },
 	[DEBUG_MESH_CUBE] = { MESH_INTERNAL, {} },
+	[DEBUG_MESH_SPHERE] = { MESH_INTERNAL, {} },
 	[MESH_QUAD] = { MESH_INTERNAL, {} },
+	[MESH_FLOOR] = { MESH_OBJ, .file = "res/floor.obj" },
+	[MESH_WALL] = { MESH_OBJ, .file = "res/wall.obj" },
+	[MESH_D_PLAT] = { MESH_OBJ, .file = "res/d_plat.obj" },
+	[SHADER_WORLD]  = { SHADER, .vert = "res/proj.vert", .frag = "res/world.frag", },
+	[DEBUG_SHADER_TEXTURE]  = { SHADER, .vert = "res/orth.vert", .frag = "res/texture.frag", },
+	[SHADER_SOLID]  = { SHADER, .vert = "res/proj.vert", .frag = "res/solid.frag", },
+	[SHADER_TEXT]   = { SHADER, .vert = "res/orth.vert", .frag = "res/text.frag", },
 	[TEXTURE_TEXT] = { TEXTURE_PNG, .file = "res/DejaVuSansMono.png" },
+	[TEXTURE_LINE] = { TEXTURE_PNG, .file = "res/tex.png" },
 	[FONT_META] = { FONT_CSV, .file = "res/DejaVuSansMono.csv" },
 };
 
@@ -168,6 +177,8 @@ asset_reload(struct game_asset *game_asset, enum asset_key key)
 		res_reload_font_meta(game_asset, key);
 		break;
 	case UNKNOWN:
+		fprintf(stderr, "%s: asset key '%d' has no type\n", __func__, key);
+		/* fall-through */
 	case MESH_INTERNAL:
 		switch (key) {
 		case DEBUG_MESH_CYLINDER:

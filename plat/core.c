@@ -28,6 +28,7 @@ file_size(const char *path)
 
 	f = fopen(path, "r");
 	if (f == NULL) {
+		fprintf(stderr, "fail to open '%s'\n", path);
 		size = -1;
 	} else {
 		fseek(f, 0, SEEK_END);
@@ -47,7 +48,7 @@ file_read(const char *path, void *buf, size_t size)
 	if (buf) {
 		f = fopen(path, "r");
 		if (f == NULL) {
-			fprintf(stderr, "fail to load '%s'\n", path);
+			fprintf(stderr, "fail to open '%s'\n", path);
 			ret = -1;
 		} else {
 			ret = fread(buf, sizeof(char), size, f);
