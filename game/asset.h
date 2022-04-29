@@ -15,6 +15,7 @@ enum asset_key {
 	SHADER_TEXT,
 	TEXTURE_TEXT,
 	TEXTURE_LINE,
+	SOUND_BIRDS,
 	FONT_META,
 	ASSET_KEY_COUNT,
 	/* internal assets id starts here, they are not handled as regular

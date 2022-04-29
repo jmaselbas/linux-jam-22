@@ -74,6 +74,13 @@ game_load_entities(struct game_state *game_state)
 		.mesh = MESH_D_PLAT,
 		.shader = SHADER_WORLD,
 	};
+	game_state->entity[id++] = (struct entity){
+		.components = { .has_sound = 1 },
+		.position = {11.667197, 4.634772, 7.830064},
+		.wav = SOUND_BIRDS,
+		.sound_state = RESET,
+	};
+
 	game_state->entity_count = id;
 }
 
@@ -312,6 +319,7 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 	struct system *sys_render = &game_state->sys_render;
 	struct system *dbg_render = &game_state->dbg_render;
 	struct system *sys_text = &game_state->sys_text;
+	struct system *sys_sound = &game_state->sys_sound;
 	struct input *last_input = &game_state->last_input;
 	struct light *light = &game_state->light;
 	game_state->width = input->width;
@@ -319,8 +327,10 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 	game_state->input = input;
 	game_state->dt = input->time - last_input->time;
 
+	game_state->state = game_state->new_state;
+	game_state->new_state = game_state->state;
+
 	(void)(light);
-	(void)(audio);
 
 	memory->scrap.used = 0;
 	sys_init(sys_render, game_state, game_asset,
@@ -328,6 +338,8 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 	sys_init(dbg_render, game_state, game_asset,
 		 memory_zone_init(mempush(&memory->scrap, SZ_2M), SZ_2M));
 	sys_init(sys_text, game_state, game_asset,
+		 memory_zone_init(mempush(&memory->scrap, SZ_4M), SZ_4M));
+	sys_init(sys_sound, game_state, game_asset,
 		 memory_zone_init(mempush(&memory->scrap, SZ_4M), SZ_4M));
 
 	camera_set_ratio(&game_state->cam, (float)input->width / (float)input->height);
@@ -415,6 +427,11 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 	if (game_state->debug)
 		sys_render_exec(dbg_render, game_state->cam, 0);
 	sys_text_exec(sys_text);
+
+	sys_sound_set_listener(sys_sound, game_state->cam.position,
+			       vec3_normalize(camera_get_dir(&game_state->cam)),
+			       vec3_normalize(camera_get_left(&game_state->cam)));
+	sys_sound_exec(sys_sound, audio);
 
 	/* Free texture */
 	delete_tex(depth);

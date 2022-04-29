@@ -64,6 +64,7 @@ static struct res_entry resfiles[ASSET_KEY_COUNT] = {
 	[SHADER_TEXT]   = { SHADER, .vert = "res/orth.vert", .frag = "res/text.frag", },
 	[TEXTURE_TEXT] = { TEXTURE_PNG, .file = "res/DejaVuSansMono.png" },
 	[TEXTURE_LINE] = { TEXTURE_PNG, .file = "res/tex.png" },
+	[SOUND_BIRDS] = { SOUND_OGG, .file = "res/audio/birds.ogg" },
 	[FONT_META] = { FONT_CSV, .file = "res/DejaVuSansMono.csv" },
 };
 
