@@ -101,7 +101,6 @@ game_init(struct game_memory *game_memory, struct file_io *file_io, struct windo
 
 	camera_set(&game_state->cam, (vec3){-1., 4.06, 8.222}, (quaternion){ {0.018959, 0.429833, 0.009028}, -0.902673});
 	camera_look_at(&game_state->cam, (vec3){0.0, 0., 0.}, (vec3){0., 1., 0.});
-	game_state->flycam_speed = 1;
 
 	game_state->window_io = win_io;
 	game_state->state = GAME_INIT;
@@ -122,31 +121,6 @@ game_fini(struct game_memory *memory)
 {
 	struct game_asset *game_asset = memory->asset.base;
 	game_asset_fini(game_asset);
-}
-
-static void
-game_set_player_movement(struct game_state *game_state, struct input *input)
-{
-	struct entity *e = &game_state->entity[0];
-	int dir_forw = 0, dir_left = 0;
-
-	if (key_pressed(input, 'W'))
-		dir_forw += 1;
-	if (key_pressed(input, 'S'))
-		dir_forw -= 1;
-	if (key_pressed(input, 'A'))
-		dir_left += 1;
-	if (key_pressed(input, 'D'))
-		dir_left -= 1;
-	if (dir_forw || dir_left) {
-		vec3 forw = vec3_mult(dir_forw, (vec3){0,0,1});
-		vec3 left = vec3_mult(dir_left, (vec3){1,0,0});
-		vec3 dir = vec3_add(forw, left);
-		e->direction = vec3_normalize(dir);
-	} else {
-		e->direction = VEC3_ZERO;
-	}
-//	camera_set_position(&game_state->cam, e->position);
 }
 
 static void
@@ -187,6 +161,62 @@ debug_texture(struct system *dbg, vec2 size, struct texture *tex)
 				{ "tex", INTERNAL_TEXTURE, .tex = tex }
 			},
 		});
+}
+
+static void
+game_set_player_movement(struct game_state *game_state, struct input *input)
+{
+	struct system *sys_text = &game_state->sys_text;
+	struct entity *e = &game_state->entity[0];
+	const float mouse_speed = 0.001;
+	int dir_forw = 0, dir_left = 0;
+	vec3 dir;
+	vec3 left = camera_get_left(&game_state->cam);
+	vec3 forw = vec3_cross(left, VEC3_AXIS_Y);
+	vec3 eye = {0, 0.7, 0};
+	float dx, dy;
+
+	if (key_pressed(input, 'W'))
+		dir_forw += 1;
+	if (key_pressed(input, 'S'))
+		dir_forw -= 1;
+	if (key_pressed(input, 'A'))
+		dir_left += 1;
+	if (key_pressed(input, 'D'))
+		dir_left -= 1;
+	if (dir_forw || dir_left) {
+		forw = vec3_mult(dir_forw, forw);
+		left = vec3_mult(dir_left, left);
+		dir = vec3_add(forw, left);
+		dir = vec3_normalize(dir);
+		e->direction = dir;
+	} else {
+		e->direction = VEC3_ZERO;
+	}
+
+	dx = input->xinc;
+	dy = input->yinc;
+
+	if (dx || dy) {
+		float f = vec3_dot(VEC3_AXIS_Y, camera_get_dir(&game_state->cam));
+		float u = vec3_dot(VEC3_AXIS_Y, camera_get_up(&game_state->cam));
+		float a_dy = sin(mouse_speed * dy);
+		float a_max = 0.1;
+
+		camera_rotate(&game_state->cam, VEC3_AXIS_Y, -mouse_speed * dx);
+		left = camera_get_left(&game_state->cam);
+		left = vec3_normalize(left);
+
+		/* clamp view to a_max angle */
+		if (f > 0 && (u + a_dy) < a_max) {
+			a_dy = a_max - u;
+		} else if (f < 0 && (u - a_dy) < a_max) {
+			a_dy = -(a_max - u);
+		}
+		camera_rotate(&game_state->cam, left, a_dy);
+	}
+
+	camera_set_position(&game_state->cam, vec3_add(e->position, eye));
 }
 
 static void
@@ -285,7 +315,6 @@ game_render_lvl(struct game_state *game_state)
 							{.name = "t_line", .res_id = TEXTURE_LINE },
 							{.name = "depth", .res_id = INTERNAL_TEXTURE, .tex = depth }
 						},
-
 						.cull = 1,
 					});
 				break;
@@ -297,11 +326,10 @@ game_render_lvl(struct game_state *game_state)
 						.position = {p.x+0.5, 0, p.z+0.5},
 						.rotation = quaternion_axis_angle(VEC3_AXIS_Y, (x+y)*0.5*M_PI),
 						.color = {0.5,0,0},
-										.texture = {
-					{.name = "t_line", .res_id = TEXTURE_LINE },
-					{.name = "depth", .res_id = INTERNAL_TEXTURE, .tex = depth }
-				},
-
+						.texture = {
+							{.name = "t_line", .res_id = TEXTURE_LINE },
+							{.name = "depth", .res_id = INTERNAL_TEXTURE, .tex = depth }
+						},
 						.cull = 1,
 					});
 
@@ -344,9 +372,6 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 
 	camera_set_ratio(&game_state->cam, (float)input->width / (float)input->height);
 
-	if (key_pressed(input, KEY_ESCAPE))
-		game_state->new_state = GAME_MENU;
-
 	if (key_pressed(input, 'X')  && !key_pressed(last_input, 'X'))
 		game_state->debug = !game_state->debug;
 
@@ -370,13 +395,32 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 				game_state->cam.position.z);
 	}
 
-	if (game_state->flycam)
-		flycam_move(game_state, input);
-	else
-		game_set_player_movement(game_state, input);
+	switch (game_state->state) {
+	case GAME_MENU:
+	{
+		game_state->window_io->cursor(1);
+		sys_text_printf(sys_text, (vec2){0,0}, (vec3){1,1,1}, "menu");
+		sys_text_printf(sys_text, (vec2){0,-0.1}, (vec3){1,1,1}, "press esc to resume");
+		if (key_pressed(input, KEY_ESCAPE) && !key_pressed(last_input, KEY_ESCAPE))
+			game_state->new_state = GAME_PLAY;
+	}
+	break;
+	case GAME_PLAY:
+	{
+		game_state->window_io->cursor(0);
+		if (key_pressed(input, KEY_ESCAPE) && !key_pressed(last_input, KEY_ESCAPE))
+			game_state->new_state = GAME_MENU;
 
-	game_render_lvl(game_state);
-	entity_step(game_state);
+		if (game_state->flycam)
+			flycam_move(game_state, input);
+		else
+			game_set_player_movement(game_state, input);
+
+		game_render_lvl(game_state);
+		entity_step(game_state);
+	}
+	break;
+	}
 
 	struct texture *depth = &game_state->depth;
 	*depth = create_2d_tex(2048, 2048, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);

@@ -54,51 +54,96 @@ sound_entity(struct game_state *game_state, size_t count, entity_id *id)
 	}
 }
 
+static int
+walkable_at(struct game_state *game_state, vec2 p)
+{
+	struct lvl *lvl = game_state->current_lvl;
+	int x = p.x;
+	int y = p.y;
+
+	if (p.x < 0 || p.y < 0)
+		return 0;
+	if (x > ARRAY_LEN(lvl->map) || y > ARRAY_LEN(lvl->map[0]))
+		return 0;
+
+	return lvl->map[x][y] == 0;
+}
+
 static vec3
-coll_entity(struct game_state *game_state, vec3 cur, vec3 pos)
+walk_entity(struct game_state *game_state, vec3 cur, vec3 pos)
 {
 	struct system *dbg_render = &game_state->dbg_render;
-	struct lvl *lvl = game_state->current_lvl;
+	const int N = 7;
+	const float S = 0.2;
 	int min_x, max_x;
 	int min_y, max_y;
-	unsigned int x, y;
+	int x, y;
 	vec3 p = {0};
-	vec3 s = {0.05,0.05,0.05};
-	vec3 c = {0,1,1};
+	vec3 s  = {0.01,0.01,0.01};
+	vec3 s2 = {0.2,0.2,0.2};
 	float m = 10000, d;
 
-	sys_render_push_cross(dbg_render, cur, (vec3){0.2,0.2,0.2}, (vec3){0,0.5,0.5});
-	sys_render_push_cross(dbg_render, pos, (vec3){0.1,0.1,0.1}, (vec3){0.5,0,0.5});
+	sys_render_push_vec(dbg_render, pos, vec3_normalize(vec3_sub(pos, cur)), (vec3){0,1,0.5});
+	sys_render_push_cross(dbg_render, cur, s2, (vec3){0,0.5,0.5});
+	sys_render_push_cross(dbg_render, pos, s2, (vec3){0.5,0,0.5});
 
-	min_x = MAX(0, ((int)cur.x) - 1.0);
-	max_x = MIN(((int)cur.x) + 2.0,  ARRAY_LEN(lvl->map));
-	min_y = MAX(0, ((int)cur.z) - 1.0);
-	max_y = MIN(((int)cur.z) + 2.0,  ARRAY_LEN(lvl->map[0]));
-	for (x = min_x; x < max_x; x++) {
-		for (y = min_y; y < max_y; y++) {
-			float px = x;
-			float py = y;
+	vec2 grid[N][N];
+	for (x = 0; x < N; x++) {
+		for (y = 0; y < N; y++) {
+			grid[x][y].x = ((int)cur.x) + (x-1) * S;
+			grid[x][y].y = ((int)cur.z) + (y-1) * S;
+		}
+	}
+	char walk[N][N];
+	for (x = 0; x < N; x++) {
+		for (y = 0; y < N; y++) {
+			walk[x][y] = walkable_at(game_state, grid[x][y]);
+		}
+	}
+	for (x = 0; x < N; x++) {
+		if (!walk[x][0])
+			walk[x][1] = 0;
+		if (!walk[x][N-1])
+			walk[x][N-2] = 0;
+	}
+	for (y = 0; y < N; y++) {
+		if (!walk[0][y])
+			walk[1][y] = 0;
+		if (!walk[N-1][y])
+			walk[N-2][y] = 0;
+	}
+
+	for (x = 0; x < N; x++) {
+		for (y = 0; y < N; y++) {
+			float px = grid[x][y].x;
+			float py = grid[x][y].y;
+			vec3 pp = {grid[x][y].x, 0.01, grid[x][y].y};
+			if (walk[x][y])
+				sys_render_push_cross(dbg_render, pp, s, C_GREEN);
+			else
+				sys_render_push_cross(dbg_render, pp, s, C_RED);
+
+			if (!walk[x][y])
+				continue;
 			if (pos.x < px)
 				p.x = px;
-			else if (pos.x > (px + 1.0))
-				p.x = px + 1.0;
+			else if (pos.x > (px + S))
+				p.x = px + S;
 			else
 				p.x = pos.x;
 			if (pos.z < py)
 				p.z = py;
-			else if (pos.z > (py + 1.0))
-				p.z = py + 1.0;
+			else if (pos.z > (py + S))
+				p.z = py + S;
 			else
 				p.z = pos.z;
 
-			if (lvl->map[x][y] == 0) {
-				sys_render_push_cross(dbg_render, (vec3){x,0,y}, s, c);
-				sys_render_push_cross(dbg_render, p, s, c);
-				d = vec3_dist(pos, p);
-				if (d < m) {
-					m = d;
-					cur = p;
-				}
+			sys_render_push_cross(dbg_render, (vec3){x,0,y}, s, C_CYAN);
+			sys_render_push_cross(dbg_render, p, s, C_CYAN);
+			d = vec3_dist(pos, p);
+			if (d < m) {
+				m = d;
+				cur = p;
 			}
 		}
 	}
@@ -119,9 +164,8 @@ move_entity(struct game_state *game_state, size_t count, entity_id *id)
 		vec3 dir = e->direction;
 		float speed = e->move_speed * dt;
 
-		pos = coll_entity(game_state, pos, vec3_add(pos, vec3_mult(speed, dir)));
+		pos = walk_entity(game_state, pos, vec3_add(pos, vec3_mult(speed, dir)));
 		e->position = pos;
-		sys_render_push_vec(dbg_render, pos, dir, (vec3){0,1,0.5});
 	}
 }
 

@@ -78,11 +78,11 @@ struct game_state {
 	} state, new_state;
 
 	struct lvl *current_lvl;
+	vec3 player_pos;
+	vec3 player_dir;
 	struct camera cam;
 	struct camera sun;
 	int flycam;
-	int flycam_forward, flycam_left;
-	float flycam_speed;
 
 	struct listener cur_listener;
 	struct listener nxt_listener;
@@ -106,3 +106,9 @@ struct game_state {
 	struct entity entity[MAX_ENTITY_COUNT];
 };
 
+#define C_RED    ((vec3){1, 0, 0})
+#define C_GREEN  ((vec3){0, 1, 0})
+#define C_BLUE   ((vec3){0, 0, 1})
+#define C_YELLOW ((vec3){1, 1, 0})
+#define C_CYAN   ((vec3){0, 1, 1})
+#define C_PURPLE ((vec3){1, 0, 1})
