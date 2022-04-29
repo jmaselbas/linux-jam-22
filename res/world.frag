@@ -48,7 +48,7 @@ float pcf_shadow(void)
 
 vec3 vline(vec2 p)
 {
-	vec2 pos = (p * mat2(4.0/5.0, -3.0/5.0, 3.0/5.0, 4.0/5.0) * vec2(2, 0.1));
+	vec2 pos = p;
 	vec2 axi = normalize(vec2(1.0, -1.4));
 	float f = dot(axi, pos);
 	vec2 uv = (pos + f*axi);
@@ -60,8 +60,9 @@ void main(void)
 {
 	float z = gl_FragCoord.z / gl_FragCoord.w;
 	float shadow = 0.0;
+	float inc = -dot(normal, lightd);
 
-	if (dot(normal, lightd) > 0.0)
+	if (inc < 0.0)
 		shadow = 1.0;
 	else
 		shadow = pcf_shadow();
@@ -71,12 +72,12 @@ void main(void)
 	if (shadow > 0.5)
 		val = smoothstep(0.1, 0.8, (lin.r * lin.g));
 	else
-		val = smoothstep(0.0, 0.1, 5.0*lin.g);
-	vec3 col = vec3(1) * clamp(val, 0.0, 1.0);
+		val = smoothstep(0.0, 0.1, 5.0*(lin.g));
+	vec3 col = vec3(1.0) * clamp(val, 0.0, 1.0);
 
 	vec3 v = normalize(camp - position);
-	float yy = 1-dot(normalize(vec3(0,1,0)), v);
-	float den = fogdensity * mix(0.01, 1, clamp(yy,0,1));
+	float yy = 1.0 - dot(normalize(vec3(0.0, 1.0, 0.0)), v);
+	float den = fogdensity * mix(0.01, 1.0, clamp(yy, 0.0, 1.0));
 	float fog = exp(-den* z * z);
 	col = mix(smoothstep(-0.5,1.5,col), col, clamp(fog, 0.0, 1.0));
 
