@@ -32,7 +32,7 @@ float shadowlookup(vec4 coord, vec2 uv)
 {
 	vec2 off = uv / vec2(textureSize(shadowmap, 0));
 	vec3 p = coord.xyz;
-	return 1.0 - shadow2D(shadowmap, p.xyz + vec3(off, 0.00001)).r;
+	return 1.0 - shadow2D(shadowmap, p.xyz + vec3(off, -0.00001)).r;
 }
 
 float pcf_shadow(void)
@@ -67,13 +67,15 @@ void main(void)
 	else
 		shadow = pcf_shadow();
 
-	vec3 lin = vline(position.xz);
+	vec3 col, lin;
 	float val;
-	if (shadow > 0.5)
+
+	lin = vline(position.xz *0.5+ position.yz*0.5);
+	if (shadow > 0.15)
 		val = smoothstep(0.1, 0.8, (lin.r * lin.g));
 	else
-		val = smoothstep(0.0, 0.1, 5.0*(lin.g));
-	vec3 col = vec3(1.0) * clamp(val, 0.0, 1.0);
+		val = smoothstep(0.0, 0.2, (lin.r + 2.0 * inc * lin.g));
+	col = vec3(1.0) * clamp(val, 0.0, 1.0);
 
 	vec3 v = normalize(camp - position);
 	float yy = 1.0 - dot(normalize(vec3(0.0, 1.0, 0.0)), v);
