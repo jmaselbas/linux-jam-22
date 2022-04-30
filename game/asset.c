@@ -57,6 +57,7 @@ static struct res_entry resfiles[ASSET_KEY_COUNT] = {
 	[MESH_QUAD] = { MESH_INTERNAL, {} },
 	[MESH_FLOOR] = { MESH_OBJ, .file = "res/floor.obj" },
 	[MESH_WALL] = { MESH_OBJ, .file = "res/wall.obj" },
+	[MESH_BOX] = { MESH_OBJ, .file = "res/box.obj" },
 	[MESH_D_PLAT] = { MESH_OBJ, .file = "res/d_plat.obj" },
 	[SHADER_WORLD]  = { SHADER, .vert = "res/proj.vert", .frag = "res/world.frag", },
 	[DEBUG_SHADER_TEXTURE]  = { SHADER, .vert = "res/orth.vert", .frag = "res/texture.frag", },

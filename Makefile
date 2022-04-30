@@ -37,6 +37,7 @@ RES += res/DejaVuSansMono.csv \
 	res/DejaVuSansMono.png \
 	res/d_plat.obj \
 	res/floor.obj \
+	res/box.obj \
 	res/orth.vert \
 	res/proj.vert \
 	res/solid.frag \

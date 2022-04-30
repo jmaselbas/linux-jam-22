@@ -66,7 +66,7 @@ walkable_at(struct game_state *game_state, vec2 p)
 	if (x > ARRAY_LEN(lvl->map) || y > ARRAY_LEN(lvl->map[0]))
 		return 0;
 
-	return lvl->map[x][y] == 0;
+	return lvl->map[x][y] != 1;
 }
 
 static vec3
