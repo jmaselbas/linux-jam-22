@@ -61,7 +61,7 @@ game_load_entities(struct game_state *game_state)
 		.components = {
 			.is_player = 1,
 			.has_movement = 1,
-			.has_debug = 0},
+			.has_debug = 1},
 		.move_speed = 1.8,
 		.position = game_state->current_lvl->start,
 		.direction = {0,0,0},
@@ -303,6 +303,7 @@ game_render_lvl(struct game_state *game_state)
 		for (y = 0; y < ARRAY_LEN(lvl->map[0]); y++) {
 			vec3 p = {x, 0, y};
 			switch (lvl->map[x][y]) {
+			default:
 			case 0:
 				sys_render_push(sys_render, &(struct render_entry){
 						.shader = SHADER_WORLD,

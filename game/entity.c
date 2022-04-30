@@ -75,8 +75,6 @@ walk_entity(struct game_state *game_state, vec3 cur, vec3 pos)
 	struct system *dbg_render = &game_state->dbg_render;
 	const int N = 7;
 	const float S = 0.2;
-	int min_x, max_x;
-	int min_y, max_y;
 	int x, y;
 	vec3 p = {0};
 	vec3 s  = {0.01,0.01,0.01};
@@ -154,7 +152,6 @@ walk_entity(struct game_state *game_state, vec3 cur, vec3 pos)
 static void
 move_entity(struct game_state *game_state, size_t count, entity_id *id)
 {
-	struct system *dbg_render = &game_state->dbg_render;
 	float dt = game_state->dt;
 	size_t i;
 
