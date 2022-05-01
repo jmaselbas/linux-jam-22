@@ -210,12 +210,10 @@ key_event(int key, int mod, int act)
 {
 	struct input *input = &game_input_next;
 
-	if (key == KEY_BACKSPACE) {
-		if ((mod & KMOD_ALT) && (mod & KMOD_CTRL))
+	if ((mod & KMOD_ALT) && (mod & KMOD_CTRL)) {
+		if (key == KEY_BACKSPACE)
 			should_close = 1;
-	}
-	if (key == KEY_ENTER) {
-		if ((mod & KMOD_ALT) && (mod & KMOD_CTRL))
+		if (act && key == KEY_ENTER)
 			toggle_fullscreen();
 	}
 
