@@ -32,6 +32,7 @@ struct texture {
 	GLenum type;
 	size_t width, height;
 };
+struct texture create_2d_tex_f(size_t w, size_t h, GLenum in_format, GLenum tex_format, GLenum type, void *data);
 struct texture create_2d_tex(size_t w, size_t h, GLenum format, GLenum type, void *data);
 void delete_tex(struct texture *texture);
 

@@ -156,11 +156,11 @@ sys_text_exec(struct system *sys)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	shader = game_get_shader(game_asset, SHADER_TEXT);
+	if (!shader) {
+		fprintf(stderr, "failed to get the text shader\n");
+		return;
+	}
 	render_bind_shader(shader);
-	GLint time = glGetUniformLocation(shader->prog, "time");
-	if (time >= 0)
-		glUniform1f(time, game_state->last_input.time);
-
 	render_bind_camera(shader, &game_state->cam);
 
 	for (link = sys->list.first; link != NULL; link = link->next) {
@@ -180,10 +180,6 @@ sys_text_exec(struct system *sys)
 		GLint color = glGetUniformLocation(shader->prog, "color");
 		if (color >= 0)
 			glUniform3f(color, e.color.x, e.color.y, e.color.z);
-
-		GLint fx = glGetUniformLocation(shader->prog, "fx");
-		if (fx >= 0)
-			glUniform1f(fx, e.fx);
 
 		struct texture *texture = font->atlas;
 		int unit = 0;

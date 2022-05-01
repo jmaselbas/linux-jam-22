@@ -18,7 +18,7 @@ shader_compile(GLsizei count, const GLchar **string, const GLint *length, GLenum
 	if (ret != GL_TRUE) {
 		glGetShaderInfoLog(shader, sizeof(logbuf), &logsize, logbuf);
 		glDeleteShader(shader);
-		fprintf(stderr, "--- ERROR ---\n%s", logbuf);
+		fprintf(stderr, "ERROR:\n%s", logbuf);
 		return ret;
 	}
 
@@ -176,7 +176,7 @@ ray_intersect_mesh(vec3 org, vec3 dir, struct mesh *mesh, mat4 *xfrm)
 }
 
 struct texture
-create_2d_tex(size_t w, size_t h, GLenum format, GLenum type, void *data)
+create_2d_tex_f(size_t w, size_t h, GLenum iformat, GLenum tformat, GLenum type, void *data)
 {
 	struct texture tex;
 
@@ -192,10 +192,15 @@ create_2d_tex(size_t w, size_t h, GLenum format, GLenum type, void *data)
 	glTexParameteri(tex.type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(tex.type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	/* for now input format is the same as the texture format */
-	glTexImage2D(tex.type, 0, format, w, h, 0, format, type, data);
+	glTexImage2D(tex.type, 0, iformat, w, h, 0, tformat, type, data);
 
 	return tex;
+}
+
+struct texture
+create_2d_tex(size_t w, size_t h, GLenum format, GLenum type, void *data)
+{
+	return create_2d_tex_f(w, h, format, format, type, data);
 }
 
 void

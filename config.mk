@@ -1,5 +1,5 @@
 # game version
-VERSION = ldj-22.0
+VERSION = ldj-22.1
 
 # Customize below to fit your system
 CONFIG_JACK=n

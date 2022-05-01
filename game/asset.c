@@ -62,6 +62,7 @@ static struct res_entry resfiles[ASSET_KEY_COUNT] = {
 	[MESH_D_PLAT] = { MESH_OBJ, .file = "res/d_plat.obj" },
 	[SHADER_WORLD]  = { SHADER, .vert = "res/proj.vert", .frag = "res/world.frag", },
 	[SHADER_HILIGHT]  = { SHADER, .vert = "res/proj.vert", .frag = "res/hilight.frag", },
+	[SHADER_SHADOW]  = { SHADER, .vert = "res/proj.vert", .frag = "res/shadow.frag", },
 	[DEBUG_SHADER_TEXTURE]  = { SHADER, .vert = "res/orth.vert", .frag = "res/texture.frag", },
 	[SHADER_SOLID]  = { SHADER, .vert = "res/proj.vert", .frag = "res/solid.frag", },
 	[SHADER_TEXT]   = { SHADER, .vert = "res/orth.vert", .frag = "res/text.frag", },
@@ -268,7 +269,7 @@ res_reload_shader(struct game_asset *game_asset, enum asset_key key)
 
 	ret = shader_reload(shader, vert.data, frag.data, geom.data);
 	if (ret) {
-		printf("failed to reload shader: %s %s\n", vert.data, frag.data);
+		fprintf(stderr, "failed to reload shader: %s %s\n", vert.data, frag.data);
 		asset_state(game_asset, key, STATE_UNLOAD);
 	} else {
 		asset_since(game_asset, key, time);
@@ -441,7 +442,7 @@ res_reload_png(struct game_asset *game_asset, enum asset_key key)
 			goto out;
 
 		if (n == 1)
-			format = GL_RED;
+			format = GL_ALPHA; // or GL_RED ?
 		else if (n == 2)
 			format = GL_RG;
 		else if (n == 3)

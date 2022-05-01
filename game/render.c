@@ -21,9 +21,6 @@ render_bind_mesh(struct shader *shader, struct mesh *mesh)
 	texcoord = glGetAttribLocation(shader->prog, "in_texcoord");
 
 	mesh_bind(mesh, position, normal, texcoord);
-	glVertexAttribDivisor(position, 0);
-	glVertexAttribDivisor(normal, 0);
-	glVertexAttribDivisor(texcoord, 0);
 }
 
 void
@@ -69,7 +66,7 @@ frustum_cull(vec4 frustum[6], struct mesh *mesh, vec3 pos, vec3 scale)
 }
 
 void
-sys_render_exec(struct system *sys, struct camera cam, int do_frustum_cull)
+sys_render_exec(struct system *sys, struct camera cam, int do_frustum_cull, struct shader *ov)
 {
 	struct game_state *game_state = sys->game_state;
 	struct game_asset *game_asset = sys->game_asset;
@@ -95,7 +92,10 @@ sys_render_exec(struct system *sys, struct camera cam, int do_frustum_cull)
 
 		if (!shader || last_shader != e.shader) {
 			last_shader = e.shader;
-			shader = game_get_shader(game_asset, e.shader);
+			if (ov)
+				shader = ov;
+			else
+				shader = game_get_shader(game_asset, e.shader);
 			render_bind_shader(shader);
 			render_bind_camera(shader, &cam);
 			/* mesh need to be bind again */
@@ -164,7 +164,7 @@ sys_render_exec(struct system *sys, struct camera cam, int do_frustum_cull)
 			const char *name = e.texture[unit].name;
 			enum asset_key id = e.texture[unit].res_id;
 			GLint tex_loc = glGetUniformLocation(shader->prog, name);
-			if (tex_loc) {
+			if (tex_loc >= 0) {
 				struct texture *tex_res = e.texture[unit].tex;
 				if (id < ASSET_KEY_COUNT)
 					tex_res = game_get_texture(game_asset, id);
@@ -175,39 +175,7 @@ sys_render_exec(struct system *sys, struct camera cam, int do_frustum_cull)
 			}
 		}
 
-		if (e.count == 0) {
-			render_mesh(mesh);
-		} else {
-			GLuint vbo;
-			GLint id;
-			glGenBuffers(1, &vbo);
-			glBindBuffer(GL_ARRAY_BUFFER, vbo);
-			glBufferData(GL_ARRAY_BUFFER, e.count * sizeof(vec4), e.inst, GL_STREAM_DRAW);
-
-#define OFFSET(Struct, Member) \
-      (void*)(&((Struct*)NULL)->Member)
-
-			id = glGetAttribLocation(shader->prog, "it_pos");
-			if (id >= 0) {
-				glEnableVertexAttribArray(id);
-				glBindBuffer(GL_ARRAY_BUFFER, vbo);
-				glVertexAttribPointer(id, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(float), OFFSET(vec4, x));
-				glVertexAttribDivisor(id, 1);
-			}
-			id = glGetAttribLocation(shader->prog, "it_scale");
-			if (id >= 0) {
-				glEnableVertexAttribArray(id);
-				glBindBuffer(GL_ARRAY_BUFFER, vbo);
-				glVertexAttribPointer(id, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), OFFSET(vec4, w));
-				glVertexAttribDivisor(id, 1);
-			}
-			glDisable(GL_CULL_FACE); /* TODO: only needed for the grass right now */
-			glDrawArraysInstanced(mesh->primitive, 0, mesh->vertex_count, e.count);
-			glEnable(GL_CULL_FACE);
-			glBufferData(GL_ARRAY_BUFFER, e.count * sizeof(vec4), NULL, GL_STREAM_DRAW);
-			glDeleteBuffers(1, &vbo);
-#undef OFFSET
-		}
+		render_mesh(mesh);
 	}
 }
 

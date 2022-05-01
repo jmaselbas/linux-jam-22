@@ -48,6 +48,7 @@ RES += res/DejaVuSansMono.csv \
 	res/spot.obj \
 	res/audio/birds.ogg \
 	res/hilight.frag \
+	res/shadow.frag \
 	res/world.frag
 
 # dynlib is the default target for now, not meant for release

@@ -412,9 +412,11 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 	case GAME_MENU:
 	{
 		game_state->window_io->cursor(1);
-		sys_text_printf(sys_text, (vec2){0,0}, (vec3){1,1,1}, "menu");
-		sys_text_printf(sys_text, (vec2){0,-0.1}, (vec3){1,1,1}, "press esc to resume");
+		sys_text_printf(sys_text, (vec2){-0.1,0}, (vec3){1,1,1}, "menu");
+		sys_text_printf(sys_text, (vec2){-0.4,-0.1}, (vec3){1,1,1}, "press esc or space to resume");
 		if (key_pressed(input, KEY_ESCAPE) && !key_pressed(last_input, KEY_ESCAPE))
+			game_state->new_state = GAME_PLAY;
+		if (key_pressed(input, KEY_SPACE) && !key_pressed(last_input, KEY_SPACE))
 			game_state->new_state = GAME_PLAY;
 	}
 	break;
@@ -442,9 +444,11 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 	}
 
 	struct texture *depth = &game_state->depth;
-	*depth = create_2d_tex(2048, 2048, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	*depth = create_2d_tex_f(2048, 2048, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	unsigned int fbo;
 	glGenFramebuffers(1, &fbo);
@@ -469,15 +473,16 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 		glCullFace(GL_FRONT);
 		glEnable(GL_CULL_FACE);
 
-		sys_render_exec(sys_render, game_state->sun, 1);
+		sys_render_exec(sys_render, game_state->sun, 1, game_get_shader(game_asset, SHADER_SHADOW));
 
 		if (game_state->debug) {
 			debug_texture(dbg_render, (vec2){200, 200}, depth);
 		}
 	} else {
-		printf("Error framebuffer incomplete \n");
+		printf("Error framebuffer incomplete\n");
 	}
 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 	/* Rebind the default framebuffer */
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -486,9 +491,9 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
 
-	sys_render_exec(sys_render, game_state->cam, 1);
+	sys_render_exec(sys_render, game_state->cam, 1, NULL);
 	if (game_state->debug)
-		sys_render_exec(dbg_render, game_state->cam, 0);
+		sys_render_exec(dbg_render, game_state->cam, 0, NULL);
 	sys_text_exec(sys_text);
 
 	sys_sound_set_listener(sys_sound, game_state->cam.position,

@@ -1,6 +1,8 @@
-#version 330 core
+#version 300 es
 precision highp float;
 precision highp int;
+precision mediump sampler2D;
+precision highp sampler2DShadow;
 
 in vec3 normal;
 in vec3 position;
@@ -16,7 +18,7 @@ uniform float time;
 
 uniform vec3 color;
 uniform sampler2D t_line;
-uniform sampler2DShadow depth;
+uniform sampler2D depth;
 #define shadowmap depth
 
 const float PI = 3.141592;
@@ -33,7 +35,11 @@ float shadowlookup(vec4 coord, vec2 uv)
 {
 	vec2 off = uv / vec2(textureSize(shadowmap, 0));
 	vec3 p = coord.xyz;
-	return 1.0 - shadow2D(shadowmap, p.xyz + vec3(off, -0.00001)).r;
+
+	if (p.z > (texture(shadowmap, p.xy + off).r + 0.00001))
+		return 1.0;
+	else
+		return 0.0;
 }
 
 float pcf_shadow(void)

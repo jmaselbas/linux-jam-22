@@ -117,9 +117,8 @@ window_init(char *name)
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, SDL_TRUE);
 
 	window = SDL_CreateWindow(name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -142,7 +141,7 @@ window_init(char *name)
 	show_cursor = 1;
 	SDL_SetRelativeMouseMode(show_cursor ? SDL_FALSE : SDL_TRUE);
 
-	if (!gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress))
+	if (!gladLoadGLES2((GLADloadfunc) SDL_GL_GetProcAddress))
 		die("GL init failed\n");
 
 	glViewport(0, 0, width, height);

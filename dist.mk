@@ -12,7 +12,7 @@ $(BIN)-$(VERSION).zip: $(DIST_TARGET)
 	zip -r $@ $(basename $@)
 
 dist-web: DIST_ACTION=install-web
-dist-web: $(BIN)-$(VERSION)-web.zip;
+dist-web: $(BIN)-$(VERSION)-web.zip
 
 $(BIN)-$(VERSION)-web.zip: DESTDIR=$(BIN)-$(VERSION)-web
 $(BIN)-$(VERSION)-web.zip: dist-wasm

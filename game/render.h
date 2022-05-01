@@ -32,7 +32,7 @@ void sys_render_init(struct system *sys,
 		   struct game_asset *game_asset,
 		   struct memory_zone zone);
 void sys_render_push(struct system *, struct render_entry *);
-void sys_render_exec(struct system *, struct camera, int do_frustum_cull);
+void sys_render_exec(struct system *, struct camera, int do_frustum_cull, struct shader *override);
 
 void sys_render_push_cross(struct system *sys, vec3 at, vec3 scale, vec3 color);
 void sys_render_push_vec(struct system *sys, vec3 pos, vec3 dir, vec3 color);
