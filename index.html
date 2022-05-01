@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="stylesheet" href="/style.css" type="text/css">
+<style>
+html, body  {
+	margin: 0;
+}
+body {
+	background-color: #000;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+<script type='text/javascript'>
+  var Module = {
+      thisProgram: 'linux jam 2022: sokokoo',
+      canvas: (function() { return document.getElementById('canvas'); })(),
+      print: (function() {
+          return function(text) {
+              if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+              console.log(text);
+          };
+      })(),
+      setStatus: function(text) {
+	  console.log(text);
+      },
+  };
+
+  document.addEventListener('keydown', (e) => {
+      console.log(e)
+  }, false);
+  request_fullscreen = function() {
+      e = new KeyboardEvent('keydown', {
+	  key: "Enter",
+	  keyCode: 13,
+	  which: 13,
+	  code: "Enter",
+	  ctrlKey: true,
+	  altKey: true,
+      });
+      console.log(e);
+      window.dispatchEvent(e);
+  }
+</script>
+<script async type="text/javascript" src="sokokoo.js"></script>
+</body>
+</html>
+

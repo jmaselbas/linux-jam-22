@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
+#include "plat/core.h"
+
+#ifndef WINDOWS
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "plat/core.h"
+#endif
 
 void *
 xvmalloc(void *base, size_t align, size_t size)

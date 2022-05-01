@@ -10,9 +10,9 @@ PKG = : # disable PKG since it doesn't work right now
 # Overwrite installation resources files, as resources are already
 # built-in the output binary with --preload-file option
 install-web: WEB=$(OUT)$(BIN) $(addprefix $(OUT)$(basename $(BIN)), .wasm .data .js)
-install-web: static
+install-web: static index.html
 	@mkdir -p $(DESTDIR)
 	cp $(WEB) $(DESTDIR)
-	mv $(DESTDIR)/$(BIN) $(DESTDIR)/index.html
+	cp index.html $(DESTDIR)
 
 .PHONY: install-web

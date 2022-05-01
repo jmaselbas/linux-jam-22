@@ -411,18 +411,18 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 	switch (game_state->state) {
 	case GAME_MENU:
 	{
-		game_state->window_io->cursor(1);
 		sys_text_printf(sys_text, (vec2){-0.1,0}, (vec3){1,1,1}, "menu");
 		sys_text_printf(sys_text, (vec2){-0.4,-0.1}, (vec3){1,1,1}, "press esc or space to resume");
 		if (key_pressed(input, KEY_ESCAPE) && !key_pressed(last_input, KEY_ESCAPE))
 			game_state->new_state = GAME_PLAY;
 		if (key_pressed(input, KEY_SPACE) && !key_pressed(last_input, KEY_SPACE))
 			game_state->new_state = GAME_PLAY;
+		if (game_state->new_state == GAME_PLAY)
+			game_state->window_io->cursor(0);
 	}
 	break;
 	case GAME_PLAY:
 	{
-		game_state->window_io->cursor(0);
 		if (key_pressed(input, KEY_ESCAPE) && !key_pressed(last_input, KEY_ESCAPE))
 			game_state->new_state = GAME_MENU;
 		if (key_pressed(input, 'R') && !key_pressed(last_input, 'R'))
@@ -439,6 +439,8 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 			sys_text_printf(sys_text, (vec2){0,-0.1}, (vec3){1,1,1}, "thanks for playing");
 		}
 		entity_step(game_state);
+		if (game_state->new_state == GAME_MENU)
+			game_state->window_io->cursor(1);
 	}
 	break;
 	}

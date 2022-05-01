@@ -28,7 +28,7 @@ dist-w64:
 	make O=build_w64 TARGET=x86_64-w64-mingw32 EXT=.exe DESTDIR=$(DESTDIR) RELEASE=y $(DIST_ACTION)
 
 dist-wasm:
-	make O=build_wasm TARGET=wasm32-unknown-emscripten EXT=.html DESTDIR=$(DESTDIR) RELEASE=y $(DIST_ACTION)
+	make O=build_wasm TARGET=wasm32-unknown-emscripten EXT=.js DESTDIR=$(DESTDIR) RELEASE=y $(DIST_ACTION)
 
 dist-clean: DIST_ACTION=clean
 dist-clean: $(DIST_TARGET) $(DIST_WEB_TARGET)

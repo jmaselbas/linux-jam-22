@@ -4,6 +4,7 @@
 #include <stdarg.h>
 
 #include "plat/glad.h"
+#define SDL_MAIN_HANDLED
 #include <SDL.h>
 
 #include "core/engine.h"
@@ -54,7 +55,6 @@ unsigned int height = 800;
 int should_close;
 int focused;
 int show_cursor;
-static int xpre, ypre;
 
 struct input game_input_next;
 struct input game_input;
@@ -80,12 +80,22 @@ request_cursor(int show)
 {
 	show_cursor = show;
 	SDL_SetRelativeMouseMode(show_cursor ? SDL_FALSE : SDL_TRUE);
+	SDL_SetWindowGrab(window, show_cursor ? SDL_FALSE : SDL_TRUE);
+	SDL_ShowCursor(show_cursor);
 }
 
 struct window_io glfw_io = {
 	.close = request_close,
 	.cursor = request_cursor,
 };
+
+static int fullscreen;
+static void
+toggle_fullscreen(void)
+{
+	fullscreen = !fullscreen;
+	SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+}
 
 static void
 swap_input(struct input *new, struct input *buf)
@@ -168,29 +178,22 @@ window_swap_buffers(void)
 }
 
 static void
-focus_event(int focus)
-{
-	focused = focus;
-	if (focused) {
-		SDL_SetRelativeMouseMode(show_cursor ? SDL_FALSE : SDL_TRUE);
-	} else {
-		SDL_SetRelativeMouseMode(SDL_FALSE);
-	}
-}
-
-static void
 mouse_motion_event(int xpos, int ypos, int xinc, int yinc)
 {
 	struct input *input = &game_input_next;
 
-	if (focused) {
-		input->xpos = xpos;
-		input->ypos = ypos;
-		input->xinc += xinc;
-		input->yinc += yinc;
+	if (xinc < -10000 || yinc < -10000) {
+		/* HACK ugly and broken workaround for web */
+		printf("me %08x xrel %d, yrel %d\n", SDL_GetWindowFlags(window), xinc, yinc);
+		int show = show_cursor;
+		request_cursor(!show);
+		request_cursor(show);
+		return;
 	}
-	xpre = xpos;
-	ypre = ypos;
+	input->xpos = xpos;
+	input->ypos = ypos;
+	input->xinc += xinc;
+	input->yinc += yinc;
 }
 
 static void
@@ -210,6 +213,10 @@ key_event(int key, int mod, int act)
 	if (key == KEY_BACKSPACE) {
 		if ((mod & KMOD_ALT) && (mod & KMOD_CTRL))
 			should_close = 1;
+	}
+	if (key == KEY_ENTER) {
+		if ((mod & KMOD_ALT) && (mod & KMOD_CTRL))
+			toggle_fullscreen();
 	}
 
 	if ((unsigned int)key < ARRAY_LEN(input->keys))
@@ -290,8 +297,12 @@ window_poll_events(void)
 	int w, h;
 
 	SDL_GL_GetDrawableSize(window, &w, &h);
-	width  = (w < 0) ? 0 : (int) w;
-	height = (h < 0) ? 0 : (int) h;
+	if (w <= 100 || h <= 100)
+		printf("got width: %d  height: %d\n", w, h);
+	w = (w <= 0) ? 1 : w;
+	h = (h <= 0) ? 1 : h;
+	width  = w;
+	height = h;
 
 	while (SDL_PollEvent(&e)) {
 		switch(e.type) {
@@ -312,12 +323,6 @@ window_poll_events(void)
 		case SDL_MOUSEBUTTONUP:
 			act = e.button.state == SDL_PRESSED ? KEY_PRESSED : KEY_RELEASED;
 			mouse_button_event(e.button.button - 1, act);
-			break;
-		case SDL_WINDOWEVENT:
-			if (e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
-				focus_event(1);
-			else if (e.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
-				focus_event(0);
 			break;
 		}
 	}
