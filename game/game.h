@@ -59,6 +59,7 @@ struct listener {
 struct lvl {
 	char map[16][16];
 	vec3 start;
+	int count;
 };
 
 struct game_state {
@@ -83,7 +84,7 @@ struct game_state {
 	struct camera cam;
 	struct camera sun;
 	int flycam;
-
+	int win;
 	struct listener cur_listener;
 	struct listener nxt_listener;
 
@@ -101,7 +102,6 @@ struct game_state {
 	struct system sys_text;
 	struct system sys_sound;
 
-#define MAX_ENTITY_COUNT 512
 	size_t entity_count;
 	struct entity entity[MAX_ENTITY_COUNT];
 };

@@ -35,23 +35,24 @@ game_load_font(struct game_asset *game_asset)
 }
 
 struct lvl lvl1 = {
-	.start = {1.5, 0, 1.5},
+	.start = {1.5, 0, 3.5},
+	.count = 9,
 	.map = {
 		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-		{1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1},
-		{1, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 1, 0, 4, 4, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 1, 0, 0, 4, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 1,2|4,1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 1, 2, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 2, 0, 1, 4, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1},
+		{1, 2, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1},
+		{1, 2, 4, 4, 4, 0, 0, 4, 0, 2, 1, 0, 0, 0, 0, 1},
+		{1, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1},
 		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 	},
 };
@@ -64,6 +65,7 @@ game_load_entities(struct game_state *game_state)
 	if (game_state->current_lvl == NULL)
 		game_state->current_lvl = &lvl1;
 
+	game_state->win = 0;
 	/* player must have the id 0 */
 	game_state->entity[id++] = (struct entity){
 		.components = {
@@ -76,6 +78,9 @@ game_load_entities(struct game_state *game_state)
 		.debug_mesh = DEBUG_MESH_CYLINDER,
 		.debug_scale = {0.2, 0.5, 0.2},
 	};
+	camera_set(&game_state->cam, game_state->entity[0].position, (quaternion){ {0.018959, 0.429833, 0.009028}, -0.902673});
+	camera_look_at(&game_state->cam, (vec3){4.5, 0., 2.5}, VEC3_AXIS_Y);
+
 	game_state->entity[id++] = (struct entity){
 		.components = { .has_render = 1, },
 		.position = {5, 0, 10},
@@ -93,18 +98,52 @@ game_load_entities(struct game_state *game_state)
 	struct lvl *lvl = game_state->current_lvl;
 	for (x = 0; x < ARRAY_LEN(lvl->map); x++) {
 		for (y = 0; y < ARRAY_LEN(lvl->map[0]); y++) {
-
-			if (lvl->map[x][y] == 5) {
+			vec3 p = { x + 0.5, 0, y + 0.5};
+			if (lvl->map[x][y] == 1) {
 				game_state->entity[id++] = (struct entity){
-					.components = { .has_render = 1 },
-					.position = {x, 0, y},
+					.components = { .has_render = 1, .is_wall = 1},
+					.position = p,
+					.rotation = quaternion_axis_angle(VEC3_AXIS_Y, (x+y)*0.5*M_PI),
+					.mesh = MESH_WALL,
+					.shader = SHADER_WORLD,
+				};
+			} else {
+				game_state->entity[id++] = (struct entity){
+					.components = { .has_render = 1, },
+					.position = p,
+					.rotation = quaternion_axis_angle(VEC3_AXIS_Y, (x+y)*0.5*M_PI),
+					.mesh = MESH_FLOOR,
+					.shader = SHADER_WORLD,
+				};
+			}
+			if (lvl->map[x][y] & 4) {
+				game_state->entity[id++] = (struct entity){
+					.components = { .has_render = 1, .is_box = 1 },
+					.move_speed = 1.0,
+					.position = p,
 					.mesh = MESH_BOX,
 					.shader = SHADER_WORLD,
-					.color = C_RED,
+					.color = C_CYAN,
 				};
 			}
 		}
 	}
+	for (x = 0; x < ARRAY_LEN(lvl->map); x++) {
+		for (y = 0; y < ARRAY_LEN(lvl->map[0]); y++) {
+			vec3 p = { x + 0.5, 0, y + 0.5};
+			if (lvl->map[x][y] & 2) {
+				game_state->entity[id++] = (struct entity){
+					.components = { .has_render = 1, .no_shadow = 1},
+					.position = p,
+					.mesh = MESH_SPOT,
+					.shader = SHADER_HILIGHT,
+					.color = C_CYAN,
+				};
+			}
+		}
+	}
+	if (id > MAX_ENTITY_COUNT)
+		fprintf(stderr, "max entity count exeeded!\n");
 	game_state->entity_count = id;
 }
 
@@ -185,6 +224,19 @@ debug_texture(struct system *dbg, vec2 size, struct texture *tex)
 				{ "tex", INTERNAL_TEXTURE, .tex = tex }
 			},
 		});
+}
+
+static int
+walkable_at(struct game_state *game_state, int x, int y)
+{
+	struct lvl *lvl = game_state->current_lvl;
+
+	if (x < 0 || y < 0)
+		return 0;
+	if (x > ARRAY_LEN(lvl->map) || y > ARRAY_LEN(lvl->map[0]))
+		return 0;
+
+	return lvl->map[x][y] == 0;
 }
 
 static void
@@ -300,70 +352,6 @@ flycam_move(struct game_state *game_state, struct input *input)
 	}
 }
 
-static void
-game_render_wall(struct system *sys_render, vec3 pos)
-{
-	sys_render_push(sys_render, &(struct render_entry){
-			.shader = SHADER_SOLID,
-			.mesh = DEBUG_MESH_CUBE,
-			.scale = {0.5, 0.5, 0.5},
-			.position = {pos.x + 0.5, 0.5, pos.z + 0.5},
-			.rotation = QUATERNION_IDENTITY,
-			.color = {1,0,0},
-			.cull = 1,
-		});
-}
-
-static void
-game_render_lvl(struct game_state *game_state)
-{
-	struct system *sys_render = &game_state->sys_render;
-	struct lvl *lvl = game_state->current_lvl;
-	struct texture *depth = &game_state->depth;
-
-	unsigned int x, y;
-
-	for (x = 0; x < ARRAY_LEN(lvl->map); x++) {
-		for (y = 0; y < ARRAY_LEN(lvl->map[0]); y++) {
-			vec3 p = {x, 0, y};
-			switch (lvl->map[x][y]) {
-			default:
-			case 0:
-				sys_render_push(sys_render, &(struct render_entry){
-						.shader = SHADER_WORLD,
-						.mesh = MESH_FLOOR,
-						.scale = {1, 1, 1},
-						.position = {p.x+0.5, 0, p.z+0.5},
-						.rotation = quaternion_axis_angle(VEC3_AXIS_Y, (x+y)*0.5*M_PI),
-						.color = {0.5,0,0},
-						.texture = {
-							{.name = "t_line", .res_id = TEXTURE_LINE },
-							{.name = "depth", .res_id = INTERNAL_TEXTURE, .tex = depth }
-						},
-						.cull = 1,
-					});
-				break;
-			case 1:
-				sys_render_push(sys_render, &(struct render_entry){
-						.shader = SHADER_WORLD,
-						.mesh = MESH_WALL,
-						.scale = {1, 1, 1},
-						.position = {p.x+0.5, 0, p.z+0.5},
-						.rotation = quaternion_axis_angle(VEC3_AXIS_Y, (x+y)*0.5*M_PI),
-						.color = {0.5,0,0},
-						.texture = {
-							{.name = "t_line", .res_id = TEXTURE_LINE },
-							{.name = "depth", .res_id = INTERNAL_TEXTURE, .tex = depth }
-						},
-						.cull = 1,
-					});
-
-				break;
-			}
-		}
-	}
-}
-
 void
 game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 {
@@ -435,13 +423,19 @@ game_step(struct game_memory *memory, struct input *input, struct audio *audio)
 		game_state->window_io->cursor(0);
 		if (key_pressed(input, KEY_ESCAPE) && !key_pressed(last_input, KEY_ESCAPE))
 			game_state->new_state = GAME_MENU;
+		if (key_pressed(input, 'R') && !key_pressed(last_input, 'R'))
+			game_load_entities(game_state);
 
 		if (game_state->flycam)
 			flycam_move(game_state, input);
 		else
 			game_set_player_movement(game_state, input);
 
-		game_render_lvl(game_state);
+		if (game_state->win) {
+			sys_text_printf(sys_text, (vec2){0,0.1}, (vec3){1,1,1}, "congratulation");
+			sys_text_printf(sys_text, (vec2){0,0}, (vec3){1,1,1}, "you win");
+			sys_text_printf(sys_text, (vec2){0,-0.1}, (vec3){1,1,1}, "thanks for playing");
+		}
 		entity_step(game_state);
 	}
 	break;

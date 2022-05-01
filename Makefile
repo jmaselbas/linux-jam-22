@@ -31,7 +31,7 @@ plt-dynlib-n-obj = $(addprefix $(OUT),$(plt-dynlib-n-src:.c=.o))
 test-src += test.c
 test-obj = $(test-src:.c=.o)
 TESTBIN = test
-BIN = survivre$(EXT)
+BIN = sokokoo$(EXT)
 LIB = $(LIBDIR)/libgame.so
 RES += res/DejaVuSansMono.csv \
 	res/DejaVuSansMono.png \
@@ -45,6 +45,9 @@ RES += res/DejaVuSansMono.csv \
 	res/text.frag \
 	res/texture.frag \
 	res/wall.obj \
+	res/spot.obj \
+	res/audio/birds.ogg \
+	res/hilight.frag \
 	res/world.frag
 
 # dynlib is the default target for now, not meant for release

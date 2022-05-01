@@ -3,6 +3,7 @@
 DIST_TARGET = dist-linux-x86_64 dist-linux-x86 dist-w64
 DIST_WEB_TARGET = dist-wasm
 
+DESTDIR=$(BIN)-$(VERSION)
 dist: DIST_ACTION=install
 dist: $(BIN)-$(VERSION).zip;
 

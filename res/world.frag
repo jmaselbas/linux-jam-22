@@ -14,6 +14,7 @@ uniform vec3 lightd;
 uniform vec4 lightc;
 uniform float time;
 
+uniform vec3 color;
 uniform sampler2D t_line;
 uniform sampler2DShadow depth;
 #define shadowmap depth
@@ -22,7 +23,7 @@ const float PI = 3.141592;
 const float Epsilon = 0.00001;
 
 const float fogdensity = 0.005;
-const vec3 fogcolor = vec3(0.12, 0.12, 0.12);
+const vec3 fogcolor = vec3(0.5, 0.4, 0.3);
 const vec3 bot = vec3(0.40, 0.5, 0.47);
 const vec3 top = vec3(0.10, 0.14, 0.2);
 
@@ -77,11 +78,12 @@ void main(void)
 		val = smoothstep(0.0, 0.2, (lin.r + 2.0 * inc * lin.g));
 	col = vec3(1.0) * clamp(val, 0.0, 1.0);
 
+	col += mix(color, vec3(0), clamp(position.y * 4.0, 0.0, 1.0));
 	vec3 v = normalize(camp - position);
 	float yy = 1.0 - dot(normalize(vec3(0.0, 1.0, 0.0)), v);
 	float den = fogdensity * mix(0.01, 1.0, clamp(yy, 0.0, 1.0));
 	float fog = exp(-den* z * z);
-	col = mix(smoothstep(-0.5,1.5,col), col, clamp(fog, 0.0, 1.0));
+	col = mix(fogcolor, col, clamp(fog, 0.0, 1.0));
 
 	out_color = vec4(col, 1.0);
 }
